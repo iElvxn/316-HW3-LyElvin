@@ -410,9 +410,24 @@ export const useGlobalStore = () => {
     store.removeSong = function (index) {
 
     }
-    // THIS FUNCTION UPDATES THE TEXT IN THE ITEM AT index TO text
     store.updateSong = function (index, songData) {
+        //update tehe song at the index with the new song
+        const songs = [...store.currentList.songs]; //crete a copy
+        songs[index] = { ...songs[index], ...songData };
 
+        storeReducer({ //updates locally
+            type: GlobalStoreActionType.SET_CURRENT_LIST,
+            payload: { ...store.currentList, songs }
+        });
+
+        //update opur server
+        requestSender.updatePlaylist(store.currentList._id, { songs })
+            .then(() => {
+                store.addUpdateSongTransaction(index, songData);
+            })
+            .catch(error => {
+                console.error("UPDATE SONG FAILED", error);
+            });
     }
     // THIS ADDS A BRAND NEW SONG
     store.addNewSong = () => {
