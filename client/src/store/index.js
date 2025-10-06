@@ -186,8 +186,8 @@ export const useGlobalStore = () => {
             case GlobalStoreActionType.HIDE_MODALS: {
                 return setStore({
                     currentModal: CurrentModal.NONE,
-                    idNamePairs: store.idNamePairs,
-                    currentList: store.currentList,
+                    idNamePairs: payload.idNamePairs || store.idNamePairs,
+                    currentList: (payload.currentList !== undefined) ? payload.currentList : store.currentList,
                     currentSongIndex: -1,
                     currentSong: null,
                     newListCounter: store.newListCounter,
@@ -211,7 +211,7 @@ export const useGlobalStore = () => {
 
         for (let playlist of store.idNamePairs) {
             if (playlist._id === id) {
-                updatedPairs.push({_id: playlist._id, name: newName});
+                updatedPairs.push({ _id: playlist._id, name: newName });
             } else {
                 updatedPairs.push(playlist);
             }
@@ -301,7 +301,35 @@ export const useGlobalStore = () => {
         getListToDelete(id);
     }
     store.deleteMarkedList = function () {
-        store.hideModals();
+        const idToDelete = store.listIdMarkedForDeletion;
+
+        // create a new array without the delete playlst
+        const updatedPairs = [];
+        for (let playlist of store.idNamePairs) {
+            if (playlist._id !== idToDelete) {
+                updatedPairs.push(playlist);
+            }
+        }
+
+        let currentList = store.currentList;
+        if (currentList?._id === idToDelete) { // set current list to null since we deleted it
+            currentList = null;
+        }
+
+        storeReducer({
+            type: GlobalStoreActionType.HIDE_MODALS,
+            payload: { idNamePairs: updatedPairs, currentList: currentList }
+        });
+
+        requestSender.deletePlaylist(idToDelete)
+            .then(() => {
+                if (currentList?._id === idToDelete) {
+                    store.closeCurrentList();
+                }
+            })
+            .catch(error => {
+                console.error("DELETE PLAYLIST FAILED", error);
+            });
     }
     // THIS FUNCTION SHOWS THE MODAL FOR PROMPTING THE USER
     // TO SEE IF THEY REALLY WANT TO DELETE THE LIST
@@ -350,7 +378,27 @@ export const useGlobalStore = () => {
     // THIS FUNCTION CREATES A NEW SONG IN THE CURRENT LIST
     // USING THE PROVIDED DATA AND PUTS THIS SONG AT INDEX
     store.createSong = function (index, song) {
+        if (!store.currentList) return;
+        // create a copy of the current songs array
+        // add the new song at the specified index
+        //update the local state with the new array
+        //save ti server
 
+        const songs = [...store.currentList.songs];
+        songs.splice(index, 0, song);
+        storeReducer({
+            type: GlobalStoreActionType.SET_CURRENT_LIST,
+            payload: { ...store.currentList, songs }
+        });
+
+        // add the song to the database
+        requestSender.updatePlaylist(store.currentList._id, { songs })
+            .then(() => {
+                store.addCreateSongTransaction(index, song.title, song.artist, song.youTubeId);
+            })
+            .catch(error => {
+                console.error("CREATE SONG FAILED", error);
+            });
     }
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
@@ -368,7 +416,17 @@ export const useGlobalStore = () => {
     }
     // THIS ADDS A BRAND NEW SONG
     store.addNewSong = () => {
+        if (!store.currentList) return;
 
+        const newSong = {
+            title: "Untitled",
+            artist: "Unknown",
+            youTubeId: "dQw4w9WgXcQ",
+        };
+
+        // add the song at the end
+        const newIndex = store.currentList.songs.length;
+        store.createSong(newIndex, newSong);
     }
 
     // THIS FUNCDTION ADDS A CreateSong_Transaction TO THE TRANSACTION STACK
