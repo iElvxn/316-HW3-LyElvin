@@ -474,7 +474,29 @@
 		},
 		{
 			"name": "Delete Playlist",
-			"item": []
+			"item": [
+				{
+					"name": "Delete Playlist",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:4000/api/playlist/68e302d380ac5a209430e7ad",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"playlist",
+								"68e302d380ac5a209430e7ad"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "Read Playlist Pairs",
