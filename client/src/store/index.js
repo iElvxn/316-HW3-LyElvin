@@ -460,15 +460,9 @@ export const useGlobalStore = () => {
     store.addNewSong = () => {
         if (!store.currentList) return;
 
-        const newSong = {
-            title: "Untitled",
-            artist: "Unknown",
-            youTubeId: "dQw4w9WgXcQ",
-        };
-
         // add the song at the end
         const newIndex = store.currentList.songs.length;
-        store.createSong(newIndex, newSong);
+        store.addCreateSongTransaction(newIndex, "Untitled", "Unknown", "dQw4w9WgXcQ");
     }
 
     // THIS FUNCDTION ADDS A CreateSong_Transaction TO THE TRANSACTION STACK
