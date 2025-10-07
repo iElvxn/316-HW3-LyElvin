@@ -378,32 +378,29 @@ export const useGlobalStore = () => {
     // THIS FUNCTION CREATES A NEW SONG IN THE CURRENT LIST
     // USING THE PROVIDED DATA AND PUTS THIS SONG AT INDEX
     store.createSong = function (index, song) {
-        // Use functional setState to get fresh state
+        // get fresh state
         setStore(prevStore => {
             if (!prevStore.currentList) return prevStore;
 
             const songs = [...prevStore.currentList.songs];
             console.log("Songs before creating", songs)
-            songs.splice(index, 0, song);
+            songs.splice(index, 0, song); //puts teh song at the end
 
             const updatedList = { ...prevStore.currentList, songs };
 
-            // add the song to the database
+            // updater server
             requestSender.updatePlaylist(prevStore.currentList._id, { songs })
                 .catch(error => {
                     console.error("CREATE SONG FAILED", error);
                 });
 
-            return {
-                ...prevStore,
-                currentList: updatedList
-            };
+            return {...prevStore,currentList: updatedList}; //return the new list
         });
     }
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
     store.moveSong = function (start, end) {
-        // Use functional setState to get fresh state
+        // get fresh state
         setStore(prevStore => {
             if (!prevStore.currentList) return prevStore;
 
@@ -419,47 +416,36 @@ export const useGlobalStore = () => {
                     console.error("MOVE SONG FAILED", error);
                 });
 
-            return {
-                ...prevStore,
-                currentList: { ...prevStore.currentList, songs }
-            };
+            return {...prevStore,currentList: { ...prevStore.currentList, songs }}; //return the new list
         });
     }
     // THIS FUNCTION REMOVES THE SONG AT THE index LOCATION
     // FROM THE CURRENT LIST
     store.removeSong = function (index) {
-        // Use functional setState to get fresh state
+        //get fresh state
         setStore(prevStore => {
             if (!prevStore.currentList) return prevStore;
 
-            // Create a new array with the song removed
-            const songs = [
+            const songs = [ // first half + second half, where the middle is the removed song
                 ...prevStore.currentList.songs.slice(0, index),
                 ...prevStore.currentList.songs.slice(index + 1)
             ];
 
-            // Update server
+            // update server
             requestSender.updatePlaylist(prevStore.currentList._id, { songs })
                 .catch(error => {
                     console.error("REMOVE SONG FAILED", error);
                 });
 
-            return {
-                ...prevStore,
-                currentList: {
-                    ...prevStore.currentList,
-                    songs: songs
-                }
-            };
+            return {...prevStore,currentList: { ...prevStore.currentList, songs: songs }}; //return the new list
         });
     }
     store.updateSong = function (index, songData) {
-        // Use functional setState to get fresh state
         setStore(prevStore => {
             if (!prevStore.currentList) return prevStore;
 
             const songs = [...prevStore.currentList.songs];
-            songs[index] = { ...songs[index], ...songData };
+            songs[index] = { ...songs[index], ...songData }; //update the song
 
             // update server
             requestSender.updatePlaylist(prevStore.currentList._id, { songs })
@@ -467,10 +453,7 @@ export const useGlobalStore = () => {
                     console.error("UPDATE SONG FAILED", error);
                 });
 
-            return {
-                ...prevStore,
-                currentList: { ...prevStore.currentList, songs }
-            };
+            return {...prevStore,currentList: { ...prevStore.currentList, songs }}; //return the new list
         });
     }
     // THIS ADDS A BRAND NEW SONG
