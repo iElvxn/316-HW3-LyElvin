@@ -378,6 +378,7 @@ export const useGlobalStore = () => {
     // THIS FUNCTION CREATES A NEW SONG IN THE CURRENT LIST
     // USING THE PROVIDED DATA AND PUTS THIS SONG AT INDEX
     store.createSong = function (index, song) {
+        console.log('CREATE SONG called:', index, song);
         if (!store.currentList) return;
         // create a copy of the current songs array
         // add the new song at the specified index
@@ -385,7 +386,11 @@ export const useGlobalStore = () => {
         //save ti server
 
         const songs = [...store.currentList.songs];
+        console.log(songs)
+
         songs.splice(index, 0, song);
+        console.log(songs)
+
         storeReducer({
             type: GlobalStoreActionType.SET_CURRENT_LIST,
             payload: { ...store.currentList, songs }
@@ -393,9 +398,6 @@ export const useGlobalStore = () => {
 
         // add the song to the database
         requestSender.updatePlaylist(store.currentList._id, { songs })
-            .then(() => {
-                store.addCreateSongTransaction(index, song.title, song.artist, song.youTubeId);
-            })
             .catch(error => {
                 console.error("CREATE SONG FAILED", error);
             });
@@ -403,12 +405,49 @@ export const useGlobalStore = () => {
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
     store.moveSong = function (start, end) {
+        // splice the song out then insert it at the end
+        //update locally and on the server with teh new updated playlist
+        const songs = [...store.currentList.songs];
+        const [song] = songs.splice(start, 1);
 
+        // insert at end
+        songs.splice(end, 0, song);
+
+        // update local state
+        storeReducer({
+            type: GlobalStoreActionType.SET_CURRENT_LIST,
+            payload: { ...store.currentList, songs } //this will update our playlist songs
+        });
+
+        // update server
+        requestSender.updatePlaylist(store.currentList._id, { songs })
+            .catch(error => {
+                console.error("MOVE SONG FAILED", error);
+            });
     }
     // THIS FUNCTION REMOVES THE SONG AT THE index LOCATION
     // FROM THE CURRENT LIST
     store.removeSong = function (index) {
+        // Create a new array with the song removed
+        const songs = [
+            ...store.currentList.songs.slice(0, index),
+            ...store.currentList.songs.slice(index + 1)
+        ];
+        
+        const updatedList = {
+            ...store.currentList,
+            songs: songs
+        };
+        storeReducer({
+            type: GlobalStoreActionType.SET_CURRENT_LIST,
+            payload: updatedList
+        });
 
+        // Update server
+        requestSender.updatePlaylist(store.currentList._id, { songs })
+            .catch(error => {
+                console.error("REMOVE SONG FAILED", error);
+            });
     }
     store.updateSong = function (index, songData) {
         //update tehe song at the index with the new song
@@ -422,9 +461,6 @@ export const useGlobalStore = () => {
 
         //update opur server
         requestSender.updatePlaylist(store.currentList._id, { songs })
-            .then(() => {
-                store.addUpdateSongTransaction(index, songData);
-            })
             .catch(error => {
                 console.error("UPDATE SONG FAILED", error);
             });
