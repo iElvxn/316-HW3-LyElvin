@@ -378,92 +378,100 @@ export const useGlobalStore = () => {
     // THIS FUNCTION CREATES A NEW SONG IN THE CURRENT LIST
     // USING THE PROVIDED DATA AND PUTS THIS SONG AT INDEX
     store.createSong = function (index, song) {
-        console.log('CREATE SONG called:', index, song);
-        if (!store.currentList) return;
-        // create a copy of the current songs array
-        // add the new song at the specified index
-        //update the local state with the new array
-        //save ti server
+        // Use functional setState to get fresh state
+        setStore(prevStore => {
+            if (!prevStore.currentList) return prevStore;
 
-        const songs = [...store.currentList.songs];
-        console.log(songs)
+            const songs = [...prevStore.currentList.songs];
+            console.log("Songs before creating", songs)
+            songs.splice(index, 0, song);
 
-        songs.splice(index, 0, song);
-        console.log(songs)
+            const updatedList = { ...prevStore.currentList, songs };
 
-        storeReducer({
-            type: GlobalStoreActionType.SET_CURRENT_LIST,
-            payload: { ...store.currentList, songs }
+            // add the song to the database
+            requestSender.updatePlaylist(prevStore.currentList._id, { songs })
+                .catch(error => {
+                    console.error("CREATE SONG FAILED", error);
+                });
+
+            return {
+                ...prevStore,
+                currentList: updatedList
+            };
         });
-
-        // add the song to the database
-        requestSender.updatePlaylist(store.currentList._id, { songs })
-            .catch(error => {
-                console.error("CREATE SONG FAILED", error);
-            });
     }
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
     store.moveSong = function (start, end) {
-        // splice the song out then insert it at the end
-        //update locally and on the server with teh new updated playlist
-        const songs = [...store.currentList.songs];
-        const [song] = songs.splice(start, 1);
+        // Use functional setState to get fresh state
+        setStore(prevStore => {
+            if (!prevStore.currentList) return prevStore;
 
-        // insert at end
-        songs.splice(end, 0, song);
+            const songs = [...prevStore.currentList.songs];
+            const [song] = songs.splice(start, 1);
 
-        // update local state
-        storeReducer({
-            type: GlobalStoreActionType.SET_CURRENT_LIST,
-            payload: { ...store.currentList, songs } //this will update our playlist songs
+            // insert at end
+            songs.splice(end, 0, song);
+
+            // update server
+            requestSender.updatePlaylist(prevStore.currentList._id, { songs })
+                .catch(error => {
+                    console.error("MOVE SONG FAILED", error);
+                });
+
+            return {
+                ...prevStore,
+                currentList: { ...prevStore.currentList, songs }
+            };
         });
-
-        // update server
-        requestSender.updatePlaylist(store.currentList._id, { songs })
-            .catch(error => {
-                console.error("MOVE SONG FAILED", error);
-            });
     }
     // THIS FUNCTION REMOVES THE SONG AT THE index LOCATION
     // FROM THE CURRENT LIST
     store.removeSong = function (index) {
-        // Create a new array with the song removed
-        const songs = [
-            ...store.currentList.songs.slice(0, index),
-            ...store.currentList.songs.slice(index + 1)
-        ];
-        
-        const updatedList = {
-            ...store.currentList,
-            songs: songs
-        };
-        storeReducer({
-            type: GlobalStoreActionType.SET_CURRENT_LIST,
-            payload: updatedList
-        });
+        // Use functional setState to get fresh state
+        setStore(prevStore => {
+            if (!prevStore.currentList) return prevStore;
 
-        // Update server
-        requestSender.updatePlaylist(store.currentList._id, { songs })
-            .catch(error => {
-                console.error("REMOVE SONG FAILED", error);
-            });
+            // Create a new array with the song removed
+            const songs = [
+                ...prevStore.currentList.songs.slice(0, index),
+                ...prevStore.currentList.songs.slice(index + 1)
+            ];
+
+            // Update server
+            requestSender.updatePlaylist(prevStore.currentList._id, { songs })
+                .catch(error => {
+                    console.error("REMOVE SONG FAILED", error);
+                });
+
+            return {
+                ...prevStore,
+                currentList: {
+                    ...prevStore.currentList,
+                    songs: songs
+                }
+            };
+        });
     }
     store.updateSong = function (index, songData) {
-        //update tehe song at the index with the new song
-        const songs = [...store.currentList.songs]; //crete a copy
-        songs[index] = { ...songs[index], ...songData };
+        // Use functional setState to get fresh state
+        setStore(prevStore => {
+            if (!prevStore.currentList) return prevStore;
 
-        storeReducer({ //updates locally
-            type: GlobalStoreActionType.SET_CURRENT_LIST,
-            payload: { ...store.currentList, songs }
+            const songs = [...prevStore.currentList.songs];
+            songs[index] = { ...songs[index], ...songData };
+
+            // update server
+            requestSender.updatePlaylist(prevStore.currentList._id, { songs })
+                .catch(error => {
+                    console.error("UPDATE SONG FAILED", error);
+                });
+
+            return {
+                ...prevStore,
+                currentList: { ...prevStore.currentList, songs }
+            };
         });
-
-        //update opur server
-        requestSender.updatePlaylist(store.currentList._id, { songs })
-            .catch(error => {
-                console.error("UPDATE SONG FAILED", error);
-            });
     }
     // THIS ADDS A BRAND NEW SONG
     store.addNewSong = () => {
