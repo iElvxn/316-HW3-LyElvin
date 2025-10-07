@@ -184,17 +184,17 @@ export const useGlobalStore = () => {
                 });
             }
             case GlobalStoreActionType.HIDE_MODALS: {
-                return setStore({
+                return setStore(prevStore => ({
+                    ...prevStore,
                     currentModal: CurrentModal.NONE,
-                    idNamePairs: payload.idNamePairs || store.idNamePairs,
-                    currentList: (payload.currentList !== undefined) ? payload.currentList : store.currentList,
+                    idNamePairs: payload.idNamePairs || prevStore.idNamePairs,
+                    currentList: (payload.currentList !== undefined) ? payload.currentList : prevStore.currentList,
                     currentSongIndex: -1,
                     currentSong: null,
-                    newListCounter: store.newListCounter,
                     listNameActive: false,
                     listIdMarkedForDeletion: null,
                     listMarkedForDeletion: null
-                });
+                }));
             }
             default:
                 return store;
