@@ -15,7 +15,8 @@ function EditSongModal() {
             year: year,
             youTubeId: youTubeId
         };
-        store.addUpdateSongTransaction(store.currentSongIndex, newSongData);        
+        store.addUpdateSongTransaction(store.currentSongIndex, newSongData);       
+        store.hideModals(); 
     }
 
     function handleCancelEditSong() {

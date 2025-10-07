@@ -443,14 +443,21 @@ export const useGlobalStore = () => {
     store.updateSong = function (index, songData) {
         setStore(prevStore => {
             if (!prevStore.currentList) return prevStore;
-
             const songs = [...prevStore.currentList.songs];
+            const original = [...prevStore.currentList.songs];
             songs[index] = { ...songs[index], ...songData }; //update the song
 
             // update server
             requestSender.updatePlaylist(prevStore.currentList._id, { songs })
                 .catch(error => {
                     console.error("UPDATE SONG FAILED", error);
+                    setStore(prev => ({
+                        ...prev,
+                        currentList: {
+                            ...prev.currentList,
+                            songs: original
+                        }
+                    }));
                 });
 
             return {...prevStore,currentList: { ...prevStore.currentList, songs }}; //return the new list
