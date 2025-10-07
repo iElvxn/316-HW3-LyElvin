@@ -172,24 +172,36 @@ querySongs = async (req, res) => {
                 .json({ success: false, error: `Playlists not found` })
         }
 
-        let res = [];
+        let result = [];
         let seen = new Set();
 
         playlists.forEach(playlist => {
             playlist.songs.forEach(song => {
-                let metCriteria = false;
+                let metCriteria = true;
 
-                if ((title && song.title.toLowerCase().includes(title.toLowerCase())) ||
-                    (artist && song.artist.toLowerCase().includes(artist.toLowerCase())) ||
-                    (year && song.year == parseInt(year))) {
-                    metCriteria = true;
+                if (title) {
+                    if(!song.title.toLowerCase().includes(title.toLowerCase())) {
+                        metCriteria = false
+                    }
+                }
+
+                if (artist) {
+                    if(!song.artist.toLowerCase().includes(artist.toLowerCase())) {
+                        metCriteria = false
+                    }
+                }
+
+                if (year) {
+                    if(parseInt(song.year) !== parseInt(year)) {
+                        metCriteria = false
+                    }
                 }
 
                 if (metCriteria === true) {
                     let key = `${song.title}${song.artist}${song.year}`;
                     if (!seen.has(key)) { //if we alr have this song, then its a dupe and we dont add it to the result
                         seen.add(key);
-                        res.push(song);
+                        result.push(song);
                     }
                 }
             });
@@ -197,8 +209,8 @@ querySongs = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            data: allSongs,
-            count: allSongs.length
+            data: result,
+            count: result.length
         })
     }).catch(err => console.log(err))
 }

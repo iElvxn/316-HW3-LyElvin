@@ -532,7 +532,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:4000/api/playlists?nameStartsWith=Old",
+							"raw": "http://localhost:4000/api/playlists/search?prefix=Old",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -540,12 +540,40 @@
 							"port": "4000",
 							"path": [
 								"api",
-								"playlists"
+								"playlists",
+								"search"
 							],
 							"query": [
 								{
-									"key": "nameStartsWith",
+									"key": "prefix",
 									"value": "Old"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Songs Called Gold",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:4000/api/playlists/songs?title=Gold",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"playlists",
+								"songs"
+							],
+							"query": [
+								{
+									"key": "title",
+									"value": "Gold"
 								}
 							]
 						}
